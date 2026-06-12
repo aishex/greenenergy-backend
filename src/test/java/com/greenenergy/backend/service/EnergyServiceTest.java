@@ -1,21 +1,23 @@
 package com.greenenergy.backend.service;
 
-import com.greenenergy.backend.dto.external.CarbonIntensityResponse;
-import com.greenenergy.backend.dto.response.OptimalChargingWindowDto;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.greenenergy.backend.dto.external.CarbonIntensityResponse;
+import com.greenenergy.backend.dto.response.OptimalChargingWindowDto;
 
 @ExtendWith(MockitoExtension.class)
 class EnergyServiceTest {
