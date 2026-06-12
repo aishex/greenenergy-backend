@@ -2,6 +2,7 @@ package com.greenenergy.backend.service;
 
 import com.greenenergy.backend.dto.external.CarbonIntensityResponse;
 import com.greenenergy.backend.dto.response.EnergyMixDayDto;
+import com.greenenergy.backend.dto.response.OptimalChargingWindowDto;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -75,6 +76,63 @@ public class EnergyService {
                 .date(date)
                 .averageMix(averageMix)
                 .cleanEnergyPercentage(cleanEnergySum)
+                .build();
+    }
+
+    public OptimalChargingWindowDto getOptimalChargingWindow(int hours) {
+        if (hours < 1 || hours > 6) {
+            throw new IllegalArgumentException("Hours must be between 1 and 6");
+        }
+
+        ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        ZonedDateTime startOfTomorrow = now.toLocalDate().plusDays(1).atStartOfDay(ZoneOffset.UTC);
+        ZonedDateTime endOfDayAfterTomorrow = startOfTomorrow.plusDays(1).with(LocalTime.MAX);
+
+        CarbonIntensityResponse response = carbonApiClient.getGenerationMix(startOfTomorrow, endOfDayAfterTomorrow);
+        List<CarbonIntensityResponse.CarbonIntensityData> dataList = response.getData();
+
+        if (dataList == null || dataList.isEmpty()) {
+            return null;
+        }
+
+        int windowSize = hours * 2; // 30 min intervals
+        double maxCleanEnergy = -1.0;
+        int bestStartIndex = -1;
+
+        double[] cleanEnergyPerInterval = new double[dataList.size()];
+        for (int i = 0; i < dataList.size(); i++) {
+            double cleanSum = 0.0;
+            for (CarbonIntensityResponse.GenerationMix mix : dataList.get(i).getGenerationmix()) {
+                if (CLEAN_ENERGY_SOURCES.contains(mix.getFuel())) {
+                    cleanSum += mix.getPerc();
+                }
+            }
+            cleanEnergyPerInterval[i] = cleanSum;
+        }
+
+        for (int i = 0; i <= dataList.size() - windowSize; i++) {
+            double windowSum = 0.0;
+            for (int j = 0; j < windowSize; j++) {
+                windowSum += cleanEnergyPerInterval[i + j];
+            }
+            double windowAverage = windowSum / windowSize;
+            if (windowAverage > maxCleanEnergy) {
+                maxCleanEnergy = windowAverage;
+                bestStartIndex = i;
+            }
+        }
+
+        if (bestStartIndex == -1) {
+            return null;
+        }
+
+        ZonedDateTime bestStartTime = dataList.get(bestStartIndex).getFrom();
+        ZonedDateTime bestEndTime = dataList.get(bestStartIndex + windowSize - 1).getTo();
+
+        return OptimalChargingWindowDto.builder()
+                .startTime(bestStartTime)
+                .endTime(bestEndTime)
+                .averageCleanEnergyPercentage(maxCleanEnergy)
                 .build();
     }
 }
