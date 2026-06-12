@@ -85,10 +85,10 @@ public class EnergyService {
         }
 
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        ZonedDateTime startOfTomorrow = now.toLocalDate().plusDays(1).atStartOfDay(ZoneOffset.UTC);
-        ZonedDateTime endOfDayAfterTomorrow = startOfTomorrow.plusDays(1).with(LocalTime.MAX);
+        ZonedDateTime startSearch = now;
+        ZonedDateTime endSearch = now.plusHours(48);
 
-        CarbonIntensityResponse response = carbonApiClient.getGenerationMix(startOfTomorrow, endOfDayAfterTomorrow);
+        CarbonIntensityResponse response = carbonApiClient.getGenerationMix(startSearch, endSearch);
         List<CarbonIntensityResponse.CarbonIntensityData> dataList = response.getData();
 
         if (dataList == null || dataList.isEmpty()) {
