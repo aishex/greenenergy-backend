@@ -85,8 +85,14 @@ public class EnergyService {
         }
 
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        // Carbon API wymaga równych połów godzin (np. 12:00, 12:30), inaczej rzuca błędem
-        ZonedDateTime startSearch = now.withMinute(now.getMinute() >= 30 ? 30 : 0).withSecond(0).withNano(0);
+        ZonedDateTime startSearch;
+        if (now.getMinute() == 0 || now.getMinute() == 30) {
+            startSearch = now.withSecond(0).withNano(0);
+        } else if (now.getMinute() < 30) {
+            startSearch = now.withMinute(30).withSecond(0).withNano(0);
+        } else {
+            startSearch = now.plusHours(1).withMinute(0).withSecond(0).withNano(0);
+        }
         ZonedDateTime endSearch = startSearch.plusHours(48);
 
         CarbonIntensityResponse response = carbonApiClient.getGenerationMix(startSearch, endSearch);
