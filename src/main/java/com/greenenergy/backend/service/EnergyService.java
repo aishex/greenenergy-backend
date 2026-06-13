@@ -25,7 +25,7 @@ public class EnergyService {
     public List<EnergyMixDayDto> getThreeDayEnergyMix() {
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
         ZonedDateTime startOfToday = now.toLocalDate().atStartOfDay(ZoneOffset.UTC);
-        ZonedDateTime endOfDayAfterTomorrow = startOfToday.plusDays(2).with(LocalTime.MAX);
+        ZonedDateTime endOfDayAfterTomorrow = startOfToday.plusDays(3); // równe 00:00 kolejnego dnia zamiast 23:59
 
         CarbonIntensityResponse response = carbonApiClient.getGenerationMix(startOfToday, endOfDayAfterTomorrow);
 
@@ -85,8 +85,9 @@ public class EnergyService {
         }
 
         ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-        ZonedDateTime startSearch = now;
-        ZonedDateTime endSearch = now.plusHours(48);
+        // Carbon API wymaga równych połów godzin (np. 12:00, 12:30), inaczej rzuca błędem
+        ZonedDateTime startSearch = now.withMinute(now.getMinute() >= 30 ? 30 : 0).withSecond(0).withNano(0);
+        ZonedDateTime endSearch = startSearch.plusHours(48);
 
         CarbonIntensityResponse response = carbonApiClient.getGenerationMix(startSearch, endSearch);
         List<CarbonIntensityResponse.CarbonIntensityData> dataList = response.getData();
